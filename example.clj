@@ -1,25 +1,36 @@
-(ns example)
+(ns example
+  (:use [clojure.string :only [split-lines]]))
 
 (set! *warn-on-reflection* true)
 
-(definterface Foo
-  (frobnicate [])
-  (mogrify [x y]))
+(definterface Counter
+  (get [])
+  (increment [n])
+  (log []))
 
-(defn ^Foo fake-Foo []
-  (let [state-a (atom {:frobnicate 1 :data []})]
-    (reify Foo
-      (frobnicate [this]
-        (swap! state-a update-in [:frobnicate] inc))
-      (mogrify [this x y]
-        (swap! state-a update-in [:data] conj {:x x :y y})
-        (.frobnicate this)
-        :ok))))
+(defn ^Counter fake-Counter []
+  (let [val-r (ref 0)
+        log-r (ref [])]
+    (reify Counter
+      (get [this]
+        @val-r)
+      (log [this]
+        @log-r)
+      (increment [this n]
+        (dosync
+         (alter val-r + n)
+         (alter log-r conj n))))))
 
-(defn ^Foo make-Foo [host port]
-  nil)
+(defn ^Counter make-Counter [file]
+  (reify Counter
+    (get [this]
+      (reduce + (.log this)))
+    (log [this]
+      (mapv read-string (split-lines (slurp file))))
+    (increment [this n]
+      (spit file (prn-str n) :append true))))
 
-(defn doit [^Foo foo times]
+(defn doit [^Counter c times]
   (dotimes [i times]
-    (.frobnicate foo)
-    (.mogrify foo i true)))
+    (.increment c i))
+  (.get c))
