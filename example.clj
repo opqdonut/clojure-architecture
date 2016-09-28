@@ -21,14 +21,15 @@
          (alter val-r + n)
          (alter log-r conj n))))))
 
-(defn ^Counter make-Counter [file]
-  (reify Counter
-    (get [this]
-      (reduce + (.log this)))
-    (log [this]
-      (mapv read-string (split-lines (slurp file))))
-    (increment [this n]
-      (spit file (prn-str n) :append true))))
+(defn ^Counter make-Counter [& [file]]
+  (let [file (or file "/tmp/counter")]
+    (reify Counter
+      (get [this]
+        (reduce + (.log this)))
+      (log [this]
+        (mapv read-string (split-lines (slurp file))))
+      (increment [this n]
+        (spit file (prn-str n) :append true)))))
 
 (defn doit [^Counter c times]
   (dotimes [i times]
