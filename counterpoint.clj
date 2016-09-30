@@ -29,9 +29,9 @@
   (increment [this n]
     (spit file (prn-str n) :append true)))
 
-(defn new-real-counter [& [file]]
-  (let [file (or file "/tmp/counter")]
-    (->real-counter file)))
+(defn new-real-counter
+  ([] (new-real-counter "/tmp/counter"))
+  ([file] (->real-counter file)))
 
 (defn doit [c times]
   (dotimes [i times]
